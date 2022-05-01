@@ -46,6 +46,13 @@ class MenuBuilderServiceProvider extends ServiceProvider
             return;
         }
 
+        Nova::router(['nova', Authorize::class], 'multilingual-nova')
+            ->group(function ($router) {
+                $router->get('menu-builder', function ($request) {
+                    return inertia('MenuBuilder');
+                });
+            });
+
         Route::middleware(['nova', Authorize::class])
             ->namespace('Infinety\MenuBuilder\Http\Controllers')
             ->prefix('nova-vendor/menu-builder')

@@ -2,6 +2,7 @@
 
 namespace Infinety\MenuBuilder;
 
+use Illuminate\Http\Request;
 use Laravel\Nova\Nova;
 use Laravel\Nova\Tool;
 
@@ -16,6 +17,16 @@ class MenuBuilder extends Tool
     {
         Nova::script('menu-builder', __DIR__.'/../dist/js/tool.js');
         Nova::style('menu-builder', __DIR__.'/../dist/css/tool.css');
+    }
+
+    /**
+     * Build the menu that renders the navigation links for the tool.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return mixed
+     */
+    public function menu(Request $request)
+    {
     }
 
     /**
