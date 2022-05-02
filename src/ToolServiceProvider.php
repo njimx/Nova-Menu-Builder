@@ -9,7 +9,7 @@ use Infinety\MenuBuilder\Http\Resources\MenuResource;
 use Laravel\Nova\Events\ServingNova;
 use Laravel\Nova\Nova;
 
-class MenuBuilderServiceProvider extends ServiceProvider
+class ToolServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap any application services.
