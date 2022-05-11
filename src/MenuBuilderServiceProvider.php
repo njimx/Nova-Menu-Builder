@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Infinety\MenuBuilder\Http\Middleware\Authorize;
 use Infinety\MenuBuilder\Http\Resources\MenuResource;
 use Laravel\Nova\Events\ServingNova;
+use Laravel\Nova\Http\Middleware\Authenticate;
 use Laravel\Nova\Nova;
 
 class MenuBuilderServiceProvider extends ServiceProvider
@@ -18,7 +19,7 @@ class MenuBuilderServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'menu-builder');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'menu-builder');
 
         $this->app->booted(function () {
             $this->routes();
@@ -46,17 +47,21 @@ class MenuBuilderServiceProvider extends ServiceProvider
             return;
         }
 
-        Nova::router(['nova', Authorize::class], 'multilingual-nova')
-            ->group(function ($router) {
-                $router->get('menu-builder', function ($request) {
-                    return inertia('MenuBuilder');
-                });
-            });
+        Nova::router([
+            'nova',
+            Authorize::class,
+            Authenticate::class,
+        ], 'menu-builder')
+            ->group(__DIR__ . '/../routes/inertia.php');
 
-        Route::middleware(['nova', Authorize::class])
+        Route::middleware([
+            'nova',
+            Authorize::class,
+            Authenticate::class,
+        ])
             ->namespace('Infinety\MenuBuilder\Http\Controllers')
             ->prefix('nova-vendor/menu-builder')
-            ->group(__DIR__.'/../routes/api.php');
+            ->group(__DIR__ . '/../routes/api.php');
     }
 
     /**
@@ -65,7 +70,7 @@ class MenuBuilderServiceProvider extends ServiceProvider
     private function publishMigrations()
     {
         $this->publishes([
-            __DIR__.'/Migrations/create_menus_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_create_menus_table.php'),
+            __DIR__ . '/Migrations/create_menus_table.php.stub' => database_path('migrations/' . date('Y_m_d_His', time()) . '_create_menus_table.php'),
         ], 'menu-builder-migration');
     }
 

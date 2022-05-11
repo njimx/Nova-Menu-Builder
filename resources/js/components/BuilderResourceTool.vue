@@ -321,8 +321,7 @@
 
 <script>
 import _ from 'lodash';
-// import ToggleButton from 'vue-js-toggle-button'
-import { VueNestable, VueNestableHandle } from 'vue-nestable';
+import { VueNestable, VueNestableHandle } from 'vue3-nestable';
 import { codemirror } from 'vue-codemirror';
 import beautify from 'js-beautify';
 
