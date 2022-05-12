@@ -1,6 +1,8 @@
+const axios = require('axios').default;
+
 export default {
     getItems(menu) {
-        return this.axios
+        return axios
             .post('/nova-vendor/menu-builder/items', {
                 menu: menu,
             })
@@ -8,7 +10,7 @@ export default {
     },
 
     saveItems(menu, menuItems) {
-        return this.axios
+        return axios
             .post('/nova-vendor/menu-builder/save-items', {
                 menu: menu,
                 items: menuItems,
@@ -17,25 +19,25 @@ export default {
     },
 
     create(menuItem) {
-        return this.axios
+        return axios
             .post('/nova-vendor/menu-builder/new-item', menuItem)
             .then((response) => response.data);
     },
 
     edit(menu) {
-        return this.axios
+        return axios
             .get('/nova-vendor/menu-builder/edit/' + menu)
             .then((response) => response.data);
     },
 
     update(menuItemId, menuItem) {
-        return this.axios
+        return axios
             .post('/nova-vendor/menu-builder/update/' + menuItemId, menuItem)
             .then((response) => response.data);
     },
 
     destroy(menuItemId) {
-        return this.axios
+        return axios
             .post('/nova-vendor/menu-builder/destroy/' + menuItemId)
             .then((response) => response.data);
     },

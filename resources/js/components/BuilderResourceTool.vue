@@ -10,17 +10,17 @@
             </button>
         </div>
 
-        <template v-if="menuItems.length > 0">
-            <vue-nestable v-model="menuItems" @change="change" classProp="enabledClass">
-                <template slot-scope="{ item }" :placeholder="this.__('Add a new menu item')">
-                    <vue-nestable-handle :item="item" class="handle flex flex-wrap">
-                        <div class="w-2/3">
-                            <span class="font-semibold">{{ item.name }}</span>
-                            <span class="font-lighter text-80 ml-4 text-sm">{{ item.link }}</span>
+        <template v-if="hasMenu">
+            <vue-nestable :value="menuItems" @input="nestableItems = $event" @change="change" classProp="enabledClass">
+                <template v-slot="slot" :placeholder="this.__('Add a new menu item')">
+                    <vue-nestable-handle class="handle flex flex-wrap">
+                        <div class="w-2/3 mr-4">
+                            <span class="font-semibold">{{ slot.item.name }}</span>
+                            <span class="font-lighter text-80 ml-4 text-sm">{{ slot.item.link }}</span>
                         </div>
                         <div class="buttons w-1/3 flex justify-end content-center">
                             <button
-                                @click="editMenu(item)"
+                                @click="editMenu(slot.item)"
                                 title="Edit"
                                 class="appearance-none cursor-pointer text-70 hover:text-primary mr-3 self-center"
                             >
@@ -40,7 +40,7 @@
                             </button>
 
                             <button
-                                v-on:click="removeMenu(item)"
+                                v-on:click="removeMenu(slot.item)"
                                 title="Delete"
                                 class="appearance-none cursor-pointer text-70 hover:text-primary mr-3 self-center"
                             >
@@ -102,131 +102,78 @@
         </template>
 
         <div ref="modals">
-            <modal
+            <Modal
                 ref="modalConfirm"
-                v-if="modalConfirm"
+                :show="modalConfirm" 
+                @modal-close="closeModal"
                 :name="'modalConfirm'"
-                :align="'flex justify-end'"
                 :width="400"
             >
-                <div slot="container">
-                    <h2 class="mb-6 text-90 font-normal text-xl">{{ __('Delete item') }}</h2>
-                    <p v-if="itemToDelete.children.length > 0" class="text-80 leading-normal mb-4">
-                        {{
-                            __(
-                                "Take care. All children items will be deleted cause you're deleting the parent."
-                            )
-                        }}
-                    </p>
-                    <p class="text-80 leading-normal">
-                        {{ __('Are you sure to delete this menu item?') }}
-                    </p>
-                </div>
-                <div slot="buttons">
-                    <div class="ml-auto">
-                        <button
-                            type="button"
-                            @click.prevent="closeModal"
-                            class="btn text-80 font-normal h-9 px-3 mr-3 btn-link"
-                        >
-                            {{ __('Cancel') }}
-                        </button>
+                <div class="bg-white dark:bg-gray-800 p-6">
+                    <div slot="container">
+                        <h2 class="mb-6 text-90 font-normal text-xl">{{ __('Delete item') }}</h2>
+                        <p v-if="itemToDelete.children.length > 0" class="text-80 leading-normal mb-4">
+                            {{
+                                __(
+                                    "Take care. All children items will be deleted cause you're deleting the parent."
+                                )
+                            }}
+                        </p>
+                        <p class="text-base leading-normal">
+                            {{ __('Are you sure to delete this menu item?') }}
+                        </p>
+                    </div>
+                    <div slot="buttons">
+                        <div class="ml-auto py-4">
+                            <button
+                                type="button"
+                                @click.prevent="closeModal"
+                                class="btn btn-default mr-4"
+                            >
+                                {{ __('Cancel') }}
+                            </button>
 
-                        <button
-                            id="confirm-overwrite-button"
-                            ref="confirmButton"
-                            @click.prevent="confirmItemDelete"
-                            class="btn btn-default btn-danger"
-                        >
-                            {{ __('Yes, remove!') }}
-                        </button>
+                            <button
+                                id="confirm-overwrite-button"
+                                ref="confirmButton"
+                                @click.prevent="confirmItemDelete"
+                                class="btn btn-default btn-primary"
+                            >
+                                {{ __('Yes, remove!') }}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </modal>
+            </Modal>
 
-            <modal ref="modalItem" v-if="modalItem" :name="'modalItem'" :align="'flex justify-end'">
-                <div slot="container">
-                    <div class="flex flex-wrap justify-between mb-6">
-                        <h2 class=" text-90 font-normal text-xl">{{ __('Add Menu item') }}</h2>
-                        <toggle-button
-                            v-model="newItem.enabled"
-                            :color="switchColor"
-                            :width="70"
-                            :sync="true"
-                            :labels="toogleLabels"
-                        />
-                    </div>
+            <Modal 
+                ref="modalItem" 
+                :show="modalItem" 
+                @modal-close="closeModal"
+                :name="'modalItem'" 
+                >
+                <div class="bg-white dark:bg-gray-800 p-6">
+                    <div slot="container">
+                        <div class="flex flex-wrap justify-between mb-6">
+                            <h2 class=" text-90 font-normal text-xl">{{ __('Add Menu item') }}</h2>
+                            <toggle-button
+                                v-model="newItem.enabled"
+                            />
+                        </div>
 
-                    <form autocomplete="off">
-                        <div class="flex border-b border-40">
-                            <div class="w-1/5 py-4">
-                                <label class="inline-block text-80 pt-2 leading-tight">
-                                    {{ __('Name') }}
-                                </label>
-                            </div>
-                            <div class="py-4 w-4/5">
-                                <input
-                                    v-model="newItem.name"
-                                    id="name"
-                                    type="text"
-                                    :placeholder="this.__('Name')"
-                                    class="w-full form-control form-input form-input-bordered"
-                                />
-                            </div>
-                        </div>
-                        <div class="flex border-b border-40">
-                            <div class="w-1/5 py-4">
-                                <label class="inline-block text-80 pt-2 leading-tight">
-                                    {{ __('Link type') }}
-                                </label>
-                            </div>
-                            <div class="py-4 w-4/5">
-                                <select
-                                    v-model="newItem.type"
-                                    @change="setNulls"
-                                    id="type"
-                                    class="w-full form-control form-select"
-                                >
-                                    <option value="" selected="selected" disabled="disabled">
-                                        {{ __('Choose an option') }}
-                                    </option>
-                                    <option value="link"> {{ __('Static Url') }} </option>
-                                    <option value="route"> {{ __('Dynamic Route') }} </option>
-                                </select>
-                            </div>
-                        </div>
-                        <template v-if="newItem.type == 'link'">
+                        <form autocomplete="off">
                             <div class="flex border-b border-40">
                                 <div class="w-1/5 py-4">
                                     <label class="inline-block text-80 pt-2 leading-tight">
-                                        {{ __('URL') }}
+                                        {{ __('Name') }}
                                     </label>
                                 </div>
-                                <div class="py-4 w-4/5">
+                                <div class="py-4 w-full">
                                     <input
-                                        v-model="newItem.url"
-                                        id="url"
+                                        v-model="newItem.name"
+                                        id="name"
                                         type="text"
-                                        :placeholder="this.__('URL')"
-                                        class="w-full form-control form-input form-input-bordered"
-                                    />
-                                </div>
-                            </div>
-                        </template>
-
-                        <template v-if="newItem.type == 'route'">
-                            <div class="flex border-b border-40">
-                                <div class="w-1/5 py-4">
-                                    <label class="inline-block text-80 pt-2 leading-tight">
-                                        {{ __('Route') }}
-                                    </label>
-                                </div>
-                                <div class="py-4 w-4/5">
-                                    <input
-                                        v-model="newItem.route"
-                                        id="route"
-                                        type="text"
-                                        :placeholder="this.__('Route')"
+                                        :placeholder="this.__('Name')"
                                         class="w-full form-control form-input form-input-bordered"
                                     />
                                 </div>
@@ -234,87 +181,145 @@
                             <div class="flex border-b border-40">
                                 <div class="w-1/5 py-4">
                                     <label class="inline-block text-80 pt-2 leading-tight">
-                                        {{ __('Parameters') }}
+                                        {{ __('Link type') }}
                                     </label>
                                 </div>
-                                <div class="py-4 w-4/5">
-                                    <codemirror
-                                        v-model="newItem.parameters"
-                                        :options="cmOptions"
-                                        :placeholder="cmPlaceholder"
-                                    ></codemirror>
+                                <div class="py-4 w-full">
+                                    <select
+                                        v-model="newItem.type"
+                                        @change="setNulls"
+                                        id="type"
+                                        class="w-full border rounded-lg cursor-pointer bg-white z-10 p-2"
+                                    >
+                                        <option value="" selected="selected" disabled="disabled">
+                                            {{ __('Choose an option') }}
+                                        </option>
+                                        <option value="link"> {{ __('Static Url') }} </option>
+                                        <option value="route"> {{ __('Dynamic Route') }} </option>
+                                    </select>
                                 </div>
                             </div>
-                        </template>
+                            <template v-if="newItem.type == 'link'">
+                                <div class="flex border-b border-40">
+                                    <div class="w-1/5 py-4">
+                                        <label class="inline-block text-80 pt-2 leading-tight">
+                                            {{ __('URL') }}
+                                        </label>
+                                    </div>
+                                    <div class="py-4 w-full">
+                                        <input
+                                            v-model="newItem.url"
+                                            id="url"
+                                            type="text"
+                                            :placeholder="this.__('URL')"
+                                            class="w-full form-control form-input form-input-bordered"
+                                        />
+                                    </div>
+                                </div>
+                            </template>
 
-                        <div class="flex border-b border-40" v-if="newItem.type">
-                            <div class="w-1/5 py-4">
-                                <label class="inline-block text-80 pt-2 leading-tight">
-                                    {{ __('Open in') }}
-                                </label>
+                            <template v-if="newItem.type == 'route'">
+                                <div class="flex border-b border-40">
+                                    <div class="w-1/5 py-4">
+                                        <label class="inline-block text-80 pt-2 leading-tight">
+                                            {{ __('Route') }}
+                                        </label>
+                                    </div>
+                                    <div class="py-4 w-full">
+                                        <input
+                                            v-model="newItem.route"
+                                            id="route"
+                                            type="text"
+                                            :placeholder="this.__('Route')"
+                                            class="w-full form-control form-input form-input-bordered"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="flex border-b border-40">
+                                    <div class="w-1/5 py-4">
+                                        <label class="inline-block text-80 pt-2 leading-tight">
+                                            {{ __('Parameters') }}
+                                        </label>
+                                    </div>
+                                    <div class="py-4 w-full">
+                                        <codemirror
+                                            v-model="newItem.parameters"
+                                            :options="cmOptions"
+                                            :placeholder="cmPlaceholder"
+                                        ></codemirror>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="flex border-b border-40" v-if="newItem.type">
+                                <div class="w-1/5 py-4">
+                                    <label class="inline-block text-80 pt-2 leading-tight">
+                                        {{ __('Open in') }}
+                                    </label>
+                                </div>
+                                <div class="py-4 w-full">
+                                    <select
+                                        v-model="newItem.target"
+                                        id="type"
+                                        class="w-full border rounded-lg cursor-pointer bg-white z-10 p-2"
+                                    >
+                                        <option value="_self"> {{ __('Same window') }} </option>
+                                        <option value="_blank"> {{ __('New window') }} </option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="py-4 w-4/5">
-                                <select
-                                    v-model="newItem.target"
-                                    id="type"
-                                    class="w-full form-control form-select"
-                                >
-                                    <option value="_self"> {{ __('Same window') }} </option>
-                                    <option value="_blank"> {{ __('New window') }} </option>
-                                </select>
+
+                            <div class="flex border-b border-40" v-if="newItem.type">
+                                <div class="w-1/5 py-4">
+                                    <label class="inline-block text-80 pt-2 leading-tight">
+                                        {{ __('Classes') }}
+                                    </label>
+                                </div>
+                                <div class="py-4 w-full">
+                                    <input
+                                        v-model="newItem.classes"
+                                        id="classes"
+                                        type="text"
+                                        :placeholder="this.__('Classes')"
+                                        class="w-full form-control form-input form-input-bordered"
+                                    />
+                                </div>
                             </div>
+                        </form>
+                    </div>
+                    <div slot="buttons">
+                        <div class="ml-auto py-4">
+                            <button
+                                type="button"
+                                @click.prevent="closeModal"
+                                class="btn btn-default mr-4"
+                            >
+                                {{ __('Cancel') }}
+                            </button>
+
+                            <button
+                                v-if="update == false"
+                                id="confirm-overwrite-button"
+                                ref="confirmButton"
+                                @click.prevent="confirmItemCreate"
+                                class="btn btn-default btn-primary"
+                            >
+                                {{ __('Create menu item') }}
+                            </button>
+
+                            <button
+                                v-else
+                                id="confirm-overwrite-button"
+                                ref="confirmButton"
+                                @click.prevent="updateItem"
+                                class="btn btn-default btn-primary"
+                            >
+                                {{ __('Update menu item') }}
+                            </button>
                         </div>
-
-                        <div class="flex border-b border-40" v-if="newItem.type">
-                            <div class="w-1/5 py-4">
-                                <label class="inline-block text-80 pt-2 leading-tight">
-                                    {{ __('Classes') }}
-                                </label>
-                            </div>
-                            <div class="py-4 w-4/5">
-                                <input
-                                    v-model="newItem.classes"
-                                    id="classes"
-                                    type="text"
-                                    :placeholder="this.__('Classes')"
-                                    class="w-full form-control form-input form-input-bordered"
-                                />
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div slot="buttons">
-                    <div class="ml-auto">
-                        <button
-                            type="button"
-                            @click.prevent="closeModal"
-                            class="btn text-80 font-normal h-9 px-3 mr-3 btn-link"
-                        >
-                            {{ __('Cancel') }}
-                        </button>
-
-                        <button
-                            v-if="update == false"
-                            id="confirm-overwrite-button"
-                            ref="confirmButton"
-                            @click.prevent="confirmItemCreate"
-                            class="btn btn-default btn-primary"
-                        >
-                            {{ __('Create menu item') }}
-                        </button>
-
-                        <button
-                            v-else
-                            id="confirm-overwrite-button"
-                            ref="confirmButton"
-                            @click.prevent="updateItem"
-                            class="btn btn-default btn-primary"
-                        >
-                            {{ __('Update menu item') }}
-                        </button>
                     </div>
                 </div>
-            </modal>
+            </Modal>
         </div>
     </div>
 </template>
@@ -324,13 +329,13 @@ import _ from 'lodash';
 import { VueNestable, VueNestableHandle } from 'vue3-nestable';
 import { codemirror } from 'vue-codemirror';
 import beautify from 'js-beautify';
+import { isProxy, toRaw } from 'vue';
 
 import 'codemirror/addon/display/placeholder.js';
 //themes
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/dracula.css';
 import 'codemirror/mode/javascript/javascript';
-import Modal from './Modal';
 import api from '../api';
 
 export default {
@@ -339,7 +344,6 @@ export default {
         VueNestable,
         VueNestableHandle,
         codemirror,
-        Modal,
     },
     data: () => ({
         modalConfirm: false,
@@ -373,6 +377,7 @@ export default {
         cmPlaceholder: '{\n  "id": 1\n}',
         menuItems: [],
         toogleLabels: false,
+        hasMenu: false,
         switchColor: {},
     }),
     methods: {
@@ -390,6 +395,7 @@ export default {
         getData() {
             api.getItems(this.resourceId).then(result => {
                 this.menuItems = _.values(result);
+                this.hasMenu = toRaw(this.menuItems).length > 0 ?? false;
             });
         },
 
@@ -420,7 +426,7 @@ export default {
             api.destroy(this.itemToDelete.id)
                 .then(() => {
                     this.getData();
-                    this.$toasted.show(this.__('Item removed successfully!'), { type: 'success' });
+                    Nova.success(this.__('Item removed successfully!'), { type: 'success' });
                     this.itemToDelete = null;
                     this.modalConfirm = false;
                 })
@@ -449,7 +455,7 @@ export default {
                     this.getData();
                     this.modalItem = false;
                     this.resetNewItem();
-                    this.$toasted.show(this.__('Item created!'), { type: 'success' });
+                    Nova.success(this.__('Item created!'), { type: 'success' });
                 })
                 .catch(request => {
                     this.handleErrors(request);
@@ -462,7 +468,7 @@ export default {
                     this.getData();
                     this.modalItem = false;
                     this.resetNewItem();
-                    this.$toasted.show(this.__('Item updated!'), { type: 'success' });
+                    Nova.success(this.__('Item updated!'), { type: 'success' });
                 })
                 .catch(request => {
                     this.handleErrors(request);
@@ -472,17 +478,17 @@ export default {
         change() {
             api.saveItems(this.resourceId, this.menuItems)
                 .then(() => {
-                    this.$toasted.show(this.__('Menu reordered!'), { type: 'success' });
+                    Nova.success(this.__('Menu reordered!'), { type: 'success' });
                 })
                 .catch(() => {
-                    this.$toasted.show(this.__('Error on server!'), { type: 'error' });
+                    Nova.error(this.__('Error on server!'), { type: 'error' });
                 });
         },
 
         handleErrors(request) {
             let errors = request.response.data.errors;
             if (errors) {
-                _.map(errors, error => this.$toasted.show(error, { type: 'error' }));
+                _.map(errors, error => Nova.error(error, { type: 'error' }));
             }
         },
     },
