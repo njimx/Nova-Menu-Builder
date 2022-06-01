@@ -11,7 +11,7 @@
         </div>
 
         <template v-if="hasMenu">
-            <vue-nestable :value="menuItems" @input="nestableItems = $event" @change="change" classProp="enabledClass">
+            <vue-nestable :value="menuItems" @input="menuItems = $event" @change="change" classProp="enabledClass">
                 <template v-slot="slot" :placeholder="this.__('Add a new menu item')">
                     <vue-nestable-handle class="handle flex flex-wrap">
                         <div class="w-2/3 mr-4">
